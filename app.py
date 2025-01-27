@@ -2,88 +2,109 @@ import streamlit as st
 import rasterio
 import numpy as np
 import geopandas as gpd
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Point
 import folium
-from rasterio.mask import mask
 from folium.plugins import HeatMap
 
-st.title("Enhanced UX for Extreme Hotspots Detection and Visualization")
+# Configure default page settings
+st.set_page_config(page_title="LST Hotspot Analyzer", layout="wide")
 
-# Define the region of interest (ROI) as a polygon
-roi_coordinates = [
-    [43.81757833693511, 36.36206691158832],
-    [43.60746481154448, 36.20487179466631],
-    [43.93980123732573, 35.98071126783735],
-    [44.02357198927886, 35.9429184506907],
-    [44.28037740920073, 36.21373627164827],
-    [43.91782858107573, 36.40407948647744],
-    [43.81757833693511, 36.36206691158832]
-]
-roi_polygon = Polygon(roi_coordinates)
-
-# Sidebar controls
-st.sidebar.header("Customize Hotspot Detection")
-threshold_multiplier = st.sidebar.slider("Threshold Multiplier", 1.0, 3.0, 1.5, step=0.1)
-heatmap_radius = st.sidebar.slider("Heatmap Radius", 1, 20, 5)
-color_gradient = st.sidebar.radio(
-    "Heatmap Color Gradient",
-    options=["Yellow to Red", "Blue to Red", "Green to Red"],
-    index=0
-)
-
-# ... (keep all imports)
-
-# Modified gradient configuration with string keys
-gradient_options = {
-    "Yellow to Red": {'0': 'yellow', '1': 'red'},
-    "Blue to Red": {'0': 'blue', '1': 'red'},
-    "Green to Red": {'0': 'green', '1': 'red'}
-}
-
-try:
-    file_path = "./Landsat8_LST_Winter2025_Normalized.tif"
+def main():
+    st.title("🌡️ Satellite Thermal Hotspot Analysis System")
     
-    with rasterio.open(file_path) as src:
-        # Read data with explicit dtype conversion
-        lst_data = src.read(1).astype(np.float64)
-        transform = src.transform
-
-        # Handle nodata using rasterio's built-in masking
-        lst_data = np.ma.masked_array(lst_data, mask=(lst_data == src.nodata)).filled(np.nan)
-
-    # Convert coordinates with explicit type casting
-    hotspot_points = []
-    rows, cols = np.where(lst_data > upper_bound)
+    # File path handling
+    FILE_PATH = "./Landsat8_LST_Winter2025_Normalized.tif"
     
-    for row, col in zip(rows.astype(int), cols.astype(int)):  # Ensure integer indices
-        lon, lat = rasterio.transform.xy(transform, row, col)
-        # Explicit type conversion to native Python floats
-        hotspot_points.append([
-            float(lat.item()) if isinstance(lat, np.generic) else float(lat),
-            float(lon.item()) if isinstance(lon, np.generic) else float(lon)
-        ])
+    # Sidebar controls
+    with st.sidebar:
+        st.header("Analysis Parameters")
+        threshold_mult = st.slider("Threshold Multiplier", 1.0, 3.0, 1.5, 0.1,
+                                  help="Adjust sensitivity for hotspot detection")
+        heat_radius = st.slider("Heatmap Radius", 5, 50, 15,
+                               help="Visualization intensity radius")
+        color_scheme = st.selectbox("Color Scheme", 
+                                   ["Viridis", "Plasma", "Inferno", "Magma"],
+                                   index=0)
+        
+    # Color gradient configuration
+    GRADIENTS = {
+        "Viridis": {'0.1': '#440154', '0.5': '#21918c', '0.9': '#fde725'},
+        "Plasma": {'0.1': '#0d0887', '0.5': '#cc4778', '0.9': '#f0f921'},
+        "Inferno": {'0.1': '#000004', '0.5': '#bc3754', '0.9': '#fca50a'},
+        "Magma": {'0.1': '#000004', '0.5': '#b73779', '0.9': '#fcffa4'}
+    }
 
-    # Create Folium map with compatibility settings
-    m = folium.Map(
-        location=[36.2, 43.9],
-        zoom_start=10,
-        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attr='Esri World Imagery'
-    )
+    try:
+        # Data processing pipeline
+        with rasterio.open(FILE_PATH) as src:
+            band = src.read(1)
+            transform = src.transform
+            nodata = src.nodata or -9999
+            
+            # Convert to float32 for better memory handling
+            data = band.astype(np.float32)
+            data[data == nodata] = np.nan
 
-    # Add heatmap with validation
-    if hotspot_points:
-        HeatMap(
-            data=hotspot_points,
-            radius=heatmap_radius,
-            gradient=gradient_options[color_gradient],
-            min_opacity=0.6,
-            max_zoom=12
-        ).add_to(m)
-    else:
-        st.warning("No hotspots detected with current threshold settings")
+        # Statistical analysis
+        valid_vals = data[~np.isnan(data)]
+        q3 = np.percentile(valid_vals, 75)
+        iqr = np.subtract(*np.percentile(valid_vals, [75, 25]))
+        threshold = q3 + (threshold_mult * iqr)
 
-    # ... (rest of the code)
+        # Coordinate conversion with type safety
+        hotspots = []
+        rows, cols = np.where(data > threshold)
+        for r, c in zip(rows.astype(int), cols.astype(int)):
+            lon, lat = rasterio.transform.xy(transform, r, c)
+            hotspots.append([
+                float(np.round(lat, 6)),  # Ensure native Python float
+                float(np.round(lon, 6))
+            ])
 
-except Exception as e:
-    st.error(f"Processing error: {str(e)}")
+        # Visualization
+        m = folium.Map(
+            location=[36.2, 43.9],
+            zoom_start=11,
+            tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+            attr="Google Satellite",
+            control_scale=True
+        )
+
+        if hotspots:
+            HeatMap(
+                name="Thermal Hotspots",
+                data=hotspots,
+                radius=heat_radius,
+                gradient=GRADIENTS[color_scheme],
+                min_opacity=0.3,
+                blur=10,
+                max_zoom=14
+            ).add_to(m)
+        else:
+            st.warning("No hotspots detected with current parameters")
+
+        # Metrics dashboard
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Upper Threshold Value", f"{threshold:.2f}°C")
+        with col2:
+            st.metric("Identified Hotspots", f"{len(hotspots):,}")
+        with col3:
+            st.metric("Data Coverage", 
+                     f"{(valid_vals.size/data.size)*100:.1f}%")
+
+        # Map display
+        with st.expander("Interactive Thermal Map", expanded=True):
+            st.components.v1.html(m._repr_html_(), height=650)
+
+    except Exception as e:
+        st.error(f"""
+        🚨 Processing Error: {str(e)}
+        - Verify file exists at: {FILE_PATH}
+        - Check file format (must be GeoTIFF)
+        - Ensure coordinate system is WGS84 (EPSG:4326)
+        """)
+        st.stop()
+
+if __name__ == "__main__":
+    main()
