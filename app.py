@@ -10,18 +10,23 @@ from folium.plugins import HeatMap
 st.set_page_config(page_title="LST Hotspot Analyzer", layout="wide")
 
 def main():
-    # Sidebar navigation
-    st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Select a Tab", ["Analyzer", "Documentation"])
-
-    if page == "Analyzer":
-        analyzer_tab()
-    elif page == "Documentation":
-        documentation_tab()
-
-def analyzer_tab():
     st.title("🌡️ Satellite Thermal Hotspot Analysis System")
     
+    # Sidebar navigation with buttons
+    st.sidebar.title("Navigation")
+    analyzer_button = st.sidebar.button("Analyzer")
+    documentation_button = st.sidebar.button("Documentation")
+    
+    # Display the appropriate tab based on button clicks
+    if analyzer_button:
+        analyzer_tab()
+    elif documentation_button:
+        documentation_tab()
+    else:
+        st.write("Click a button in the sidebar to navigate.")
+
+def analyzer_tab():
+    st.subheader("Analyzer")
     # File path handling
     FILE_PATH = "./Landsat8_LST_Winter2025_Normalized.tif"
     
@@ -30,11 +35,11 @@ def analyzer_tab():
         st.header("Analysis Parameters")
         upper_percentile = st.slider(
             "Upper Percentile Limit (%)", 
-            95, 100, 97, 1,
+            75, 100, 95, 1,
             help="Adjust the limit for detecting extreme values as hotspots. \
                   Lower values highlight more extreme hotspots."
         )
-        heat_radius = st.slider("Heatmap Radius", 5, 10, 7,
+        heat_radius = st.slider("Heatmap Radius", 5, 50, 15,
                                help="Visualization intensity radius")
         color_scheme = st.selectbox("Color Scheme", 
                                    ["Viridis", "Plasma", "Inferno", "Magma"],
@@ -126,7 +131,7 @@ def analyzer_tab():
         st.stop()
 
 def documentation_tab():
-    st.title("📖 Documentation")
+    st.subheader("📖 Documentation")
     st.markdown("""
     ### Explanation of the Basemap
     The basemap in our application is a satellite image layer that provides a visual reference for the region we are analyzing. It helps users understand where the detected hotspots are located geographically, showing features like roads, buildings, and land cover.
