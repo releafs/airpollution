@@ -18,7 +18,7 @@ def main():
     # Sidebar controls
     with st.sidebar:
         st.header("Analysis Parameters")
-        threshold_mult = st.slider("Threshold Multiplier", 1.0, 3.0, 1.5, 0.1,
+        threshold_mult = st.slider("Threshold Multiplier", 1.0, 3.0, 1.1, 0.1,
                                   help="Adjust sensitivity for hotspot detection")
         heat_radius = st.slider("Heatmap Radius", 5, 50, 15,
                                help="Visualization intensity radius")
