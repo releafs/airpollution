@@ -12,18 +12,14 @@ st.set_page_config(page_title="LST Hotspot Analyzer", layout="wide")
 def main():
     st.title("🌡️ Satellite Thermal Hotspot Analysis System")
     
-    # Sidebar navigation with buttons
-    st.sidebar.title("Navigation")
-    analyzer_button = st.sidebar.button("Analyzer")
-    documentation_button = st.sidebar.button("Documentation")
+    # Create tabs for navigation
+    tab1, tab2 = st.tabs(["Analyzer", "Documentation"])
     
-    # Display the appropriate tab based on button clicks
-    if analyzer_button:
+    # Tab content
+    with tab1:
         analyzer_tab()
-    elif documentation_button:
+    with tab2:
         documentation_tab()
-    else:
-        st.write("Click a button in the sidebar to navigate.")
 
 def analyzer_tab():
     st.subheader("Analyzer")
@@ -80,10 +76,7 @@ def analyzer_tab():
         rows, cols = np.where(data > threshold)
         for r, c in zip(rows.astype(int), cols.astype(int)):
             lon, lat = rasterio.transform.xy(transform, r, c)
-            hotspots.append([
-                float(np.round(lat, 6)),  # Ensure native Python float
-                float(np.round(lon, 6))
-            ])
+            hotspots.append([float(np.round(lat, 6)), float(np.round(lon, 6))])
 
         # Visualization
         m = folium.Map(
