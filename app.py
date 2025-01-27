@@ -10,6 +10,16 @@ from folium.plugins import HeatMap
 st.set_page_config(page_title="LST Hotspot Analyzer", layout="wide")
 
 def main():
+    # Sidebar navigation
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Select a Tab", ["Analyzer", "Documentation"])
+
+    if page == "Analyzer":
+        analyzer_tab()
+    elif page == "Documentation":
+        documentation_tab()
+
+def analyzer_tab():
     st.title("🌡️ Satellite Thermal Hotspot Analysis System")
     
     # File path handling
@@ -114,6 +124,26 @@ def main():
         - Ensure coordinate system is WGS84 (EPSG:4326)
         """)
         st.stop()
+
+def documentation_tab():
+    st.title("📖 Documentation")
+    st.markdown("""
+    ### Explanation of the Basemap
+    The basemap in our application is a satellite image layer that provides a visual reference for the region we are analyzing. It helps users understand where the detected hotspots are located geographically, showing features like roads, buildings, and land cover.
+
+    However, it’s important to note that the basemap is not a live or up-to-date image. It’s a general background map sourced from pre-existing satellite imagery, which means:
+    
+    - **Static Nature**: The basemap represents a snapshot of the area captured in the past. It may not reflect recent changes, such as new construction, deforestation, or other developments.
+    - **Reference Only**: It serves as a guide to help locate hotspots but does not change dynamically with the thermal data we analyze.
+    - **No Connection to the Analysis**: The thermal hotspots we detect come from the separate, specialized LST data file (Land Surface Temperature). The basemap is simply a tool for visualization.
+
+    ### Why Use This Basemap?
+    - **Clarity**: It’s visually clear and shows landmarks, helping users easily identify locations of hotspots.
+    - **Accessibility**: Using a standard satellite basemap ensures the app is lightweight and user-friendly without requiring additional processing power.
+
+    ### Future Improvements
+    In future updates, the basemap could be replaced or enhanced with real-time or high-resolution imagery to reflect the most current conditions on the ground. This would provide an even better understanding of the context surrounding the detected hotspots. For now, the basemap remains a practical and helpful tool for navigating and interpreting the thermal data.
+    """)
 
 if __name__ == "__main__":
     main()
