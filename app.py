@@ -31,68 +31,59 @@ color_gradient = st.sidebar.radio(
     index=0
 )
 
-# Corrected gradient options with float keys
+# ... (keep all imports)
+
+# Modified gradient configuration with string keys
 gradient_options = {
-    "Yellow to Red": {0.0: "yellow", 1.0: "red"},
-    "Blue to Red": {0.0: "blue", 1.0: "red"},
-    "Green to Red": {0.0: "green", 1.0: "red"}
+    "Yellow to Red": {'0': 'yellow', '1': 'red'},
+    "Blue to Red": {'0': 'blue', '1': 'red'},
+    "Green to Red": {'0': 'green', '1': 'red'}
 }
 
 try:
-    # Use relative path for GitHub compatibility
-    file_path = "Landsat8_LST_Winter2025_Normalized.tif"
+    file_path = "./Landsat8_LST_Winter2025_Normalized.tif"
     
     with rasterio.open(file_path) as src:
-        # Read data without cropping
-        lst_data = src.read(1)
+        # Read data with explicit dtype conversion
+        lst_data = src.read(1).astype(np.float64)
         transform = src.transform
 
-        # Handle nodata values
-        lst_data = np.where(lst_data == src.nodata, np.nan, lst_data)
+        # Handle nodata using rasterio's built-in masking
+        lst_data = np.ma.masked_array(lst_data, mask=(lst_data == src.nodata)).filled(np.nan)
 
-    # Data processing
-    valid_data = lst_data[~np.isnan(lst_data)]
-    q1, q3 = np.percentile(valid_data, [25, 75])
-    iqr = q3 - q1
-    upper_bound = q3 + threshold_multiplier * iqr
-
-    # Convert coordinates to (lat, lon) tuples
+    # Convert coordinates with explicit type casting
     hotspot_points = []
     rows, cols = np.where(lst_data > upper_bound)
-    for row, col in zip(rows, cols):
+    
+    for row, col in zip(rows.astype(int), cols.astype(int)):  # Ensure integer indices
         lon, lat = rasterio.transform.xy(transform, row, col)
-        hotspot_points.append((float(lat), float(lon)))  # Ensure float conversion
+        # Explicit type conversion to native Python floats
+        hotspot_points.append([
+            float(lat.item()) if isinstance(lat, np.generic) else float(lat),
+            float(lon.item()) if isinstance(lon, np.generic) else float(lon)
+        ])
 
-    # Create Folium map
+    # Create Folium map with compatibility settings
     m = folium.Map(
         location=[36.2, 43.9],
         zoom_start=10,
-        tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        attr='Google Satellite'
+        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attr='Esri World Imagery'
     )
 
-    # Add heatmap with explicit type conversion
-    HeatMap(
-        data=hotspot_points,
-        radius=heatmap_radius,
-        gradient=gradient_options[color_gradient],
-        min_opacity=0.5,
-        max_zoom=12
-    ).add_to(m)
+    # Add heatmap with validation
+    if hotspot_points:
+        HeatMap(
+            data=hotspot_points,
+            radius=heatmap_radius,
+            gradient=gradient_options[color_gradient],
+            min_opacity=0.6,
+            max_zoom=12
+        ).add_to(m)
+    else:
+        st.warning("No hotspots detected with current threshold settings")
 
-    # Display components
-    st.subheader("Extreme Hotspots Map")
-    st.components.v1.html(m._repr_html_(), height=600)
-
-    # Statistics
-    st.subheader("Detection Statistics")
-    cols = st.columns(2)
-    with cols[0]:
-        st.metric("Upper Bound Temperature", f"{upper_bound:.2f}°C")
-        st.metric("Total Hotspots Detected", len(hotspot_points))
-    with cols[1]:
-        st.metric("Threshold Multiplier", f"{threshold_multiplier:.1f}x IQR")
-        st.metric("Data Coverage", f"{len(valid_data)/lst_data.size*100:.1f}%")
+    # ... (rest of the code)
 
 except Exception as e:
     st.error(f"Processing error: {str(e)}")
