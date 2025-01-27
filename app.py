@@ -18,8 +18,12 @@ def main():
     # Sidebar controls
     with st.sidebar:
         st.header("Analysis Parameters")
-        threshold_mult = st.slider("Threshold Multiplier", 1.0, 3.0, 1.1, 0.1,
-                                  help="Adjust sensitivity for hotspot detection")
+        upper_percentile = st.slider(
+            "Upper Percentile Limit (%)", 
+            75, 100, 95, 1,
+            help="Adjust the limit for detecting extreme values as hotspots. \
+                  Lower values highlight more extreme hotspots."
+        )
         heat_radius = st.slider("Heatmap Radius", 5, 50, 15,
                                help="Visualization intensity radius")
         color_scheme = st.selectbox("Color Scheme", 
@@ -54,9 +58,7 @@ def main():
 
         # Statistical analysis
         valid_vals = data[~np.isnan(data)]
-        q3 = np.percentile(valid_vals, 75)
-        iqr = np.subtract(*np.percentile(valid_vals, [75, 25]))
-        threshold = q3 + (threshold_mult * iqr)
+        threshold = np.percentile(valid_vals, upper_percentile)
 
         # Coordinate conversion with type safety
         hotspots = []
