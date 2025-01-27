@@ -20,7 +20,7 @@ def main():
         st.header("Analysis Parameters")
         upper_percentile = st.slider(
             "Upper Percentile Limit (%)", 
-            75, 100, 95, 1,
+            90, 100, 95, 1,
             help="Adjust the limit for detecting extreme values as hotspots. \
                   Lower values highlight more extreme hotspots."
         )
