@@ -24,7 +24,7 @@ def main():
             help="Adjust the limit for detecting extreme values as hotspots. \
                   Lower values highlight more extreme hotspots."
         )
-        heat_radius = st.slider("Heatmap Radius", 5, 50, 15,
+        heat_radius = st.slider("Heatmap Radius", 5, 10, 7,
                                help="Visualization intensity radius")
         color_scheme = st.selectbox("Color Scheme", 
                                    ["Viridis", "Plasma", "Inferno", "Magma"],
