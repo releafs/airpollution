@@ -25,7 +25,14 @@ def main():
         color_scheme = st.selectbox("Color Scheme", 
                                    ["Viridis", "Plasma", "Inferno", "Magma"],
                                    index=0)
-        
+
+        # Add app developer details
+        st.markdown("---")
+        st.markdown("**App Details:**")
+        st.markdown("Developed by: **Hawkar Ali Abdulhaq**")
+        st.markdown("Contact: [ha@releafs.co](mailto:ha@releafs.co)")
+        st.markdown("This is a **demo version** designed for real-time applications of geolocation polluters.")
+
     # Color gradient configuration
     GRADIENTS = {
         "Viridis": {'0.1': '#440154', '0.5': '#21918c', '0.9': '#fde725'},
