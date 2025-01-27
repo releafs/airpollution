@@ -55,13 +55,16 @@ try:
         lst_data_clipped, transform_clipped = mask(src, shapes, crop=True, nodata=np.nan)
         lst_data_clipped = lst_data_clipped[0]
 
-        # Replace nodata values with NaN
+        # Check for valid `nodata` value and handle it
         nodata_value = src.nodata
-        if nodata_value is not None:
+        if nodata_value is not None and np.isscalar(nodata_value):
             lst_data_clipped = np.where(lst_data_clipped == nodata_value, np.nan, lst_data_clipped)
 
-    # Flatten the array for extreme hotspots detection
+    # Ensure valid data is available
     valid_data = lst_data_clipped[~np.isnan(lst_data_clipped)]
+    if valid_data.size == 0:
+        st.error("No valid data available in the selected region. Please check the GeoTIFF file or region of interest.")
+        st.stop()
 
     # Detect extreme hotspots using the customized threshold
     q1 = np.percentile(valid_data, 25)  # First quartile
