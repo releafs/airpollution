@@ -35,13 +35,12 @@ color_gradient = st.sidebar.radio(
     index=0
 )
 
-# Define color gradient options
+# CORRECTED: Use float keys in gradient definition
 gradient_options = {
-    "Yellow to Red": {0: "yellow", 1: "red"},
-    "Blue to Red": {0: "blue", 1: "red"},
-    "Green to Red": {0: "green", 1: "red"}
+    "Yellow to Red": {0.0: "yellow", 1.0: "red"},
+    "Blue to Red": {0.0: "blue", 1.0: "red"},
+    "Green to Red": {0.0: "green", 1.0: "red"}
 }
-
 # Open the GeoTIFF file
 try:
     with rasterio.open(file_path) as src:
