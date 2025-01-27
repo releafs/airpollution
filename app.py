@@ -35,11 +35,11 @@ def analyzer_tab():
         st.header("Analysis Parameters")
         upper_percentile = st.slider(
             "Upper Percentile Limit (%)", 
-            75, 100, 95, 1,
+            95, 100, 97, 1,
             help="Adjust the limit for detecting extreme values as hotspots. \
                   Lower values highlight more extreme hotspots."
         )
-        heat_radius = st.slider("Heatmap Radius", 5, 50, 15,
+        heat_radius = st.slider("Heatmap Radius", 5, 10, 7,
                                help="Visualization intensity radius")
         color_scheme = st.selectbox("Color Scheme", 
                                    ["Viridis", "Plasma", "Inferno", "Magma"],
