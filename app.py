@@ -40,7 +40,7 @@ gradient_options = {
 
 try:
     # Use relative path for GitHub compatibility
-    file_path = "./Landsat8_LST_Winter2025_Normalized.tif"
+    file_path = "Landsat8_LST_Winter2025_Normalized.tif"
     
     with rasterio.open(file_path) as src:
         # Read data without cropping
