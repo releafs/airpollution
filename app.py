@@ -10,7 +10,7 @@ from folium.plugins import HeatMap
 st.set_page_config(page_title="LST Hotspot Analyzer", layout="wide")
 
 def main():
-    st.title("🌡️ Potential Sites Contributing to Air Pollution in Erbil City in January 2025")
+    st.title("🌡️ Potential Sites Contributing to Air Pollution in Erbil City in January 2025 (Not Yet Verified)")
     
     # Create tabs for navigation
     tab1, tab2 = st.tabs(["Analyzer", "Documentation"])
